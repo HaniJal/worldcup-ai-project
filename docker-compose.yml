@@ -3,11 +3,22 @@ services:
     build: .
     ports:
       - "8000:8000"
+    env_file:
+      - .env    
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     depends_on:
       - db
-  
+    volumes:
+      - ./backend:/app    # mounts code but system Python is untouched
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /app
+        - action: rebuild
+          path: ./pyproject.toml
+
   db:
     image: postgres:17
     env_file:
@@ -18,4 +29,4 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  postgres_data:      
+  postgres_data:
