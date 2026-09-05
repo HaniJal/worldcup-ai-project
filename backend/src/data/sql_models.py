@@ -1,19 +1,13 @@
-import re
 import enum
 from datetime import datetime, date
 from uuid import UUID, uuid4
 
 from sqlalchemy import String, DateTime, Date, Integer, Float, Boolean, Enum, ForeignKey
-from sqlalchemy.orm import DeclarativeBase,Mapped, mapped_column, relationship, declared_attr
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-def camel_to_snake(name: str) -> str:
-    return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
+from src.data.database import Base
 
-class Base(DeclarativeBase):
-    @declared_attr.directive
-    def __tablename__(cls) -> str:
-        return camel_to_snake(cls.__name__)    
-    
+
 # Enums
 class MatchStatus(enum.Enum):
     SCHEDULED = "scheduled"
