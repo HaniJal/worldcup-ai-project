@@ -7,6 +7,8 @@ from src.data.database import setup_db
 from src.settings import settings
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
+from src.features.teams.router import router as teams_router
+from src.features.matches.router import router as matches_router
 
 
 if sys.platform == "win32":
@@ -49,6 +51,10 @@ async def read_root():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+app.include_router(teams_router, prefix="/v1")
+app.include_router(matches_router, prefix="/v1")
 
 def use_route_names_as_operation_ids(app: FastAPI) -> None:
     for route in app.routes:
