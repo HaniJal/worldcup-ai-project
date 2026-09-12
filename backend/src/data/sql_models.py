@@ -163,6 +163,7 @@ class MatchEvent(Base):
     event_type: Mapped[str] = mapped_column(String(50), nullable=False)
 
     match: Mapped["Match"] = relationship(back_populates="events")
+    player: Mapped["Player"] = relationship()
 
 
 class MatchTeamStats(Base):
