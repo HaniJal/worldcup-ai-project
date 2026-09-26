@@ -21,6 +21,28 @@ services:
         - action: rebuild
           path: ./pyproject.toml
 
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_BACKEND_URL=http://backend:8000
+      - VITE_USE_POLLING=true
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules   # keep the container's node_modules, not your computer's
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./frontend/package.json
+
   db:
     image: postgres:17
     env_file:
