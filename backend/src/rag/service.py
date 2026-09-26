@@ -24,6 +24,8 @@ the context."""
 class RAGAnswer:
     answer: str
     sources: list[RetrievedChunk]
+    input_tokens: int = 0
+    output_tokens: int = 0
 
 
 def _build_context(chunks: list[RetrievedChunk]) -> str:
@@ -35,14 +37,19 @@ def retrieve(question: str, top_k: int = 5, type_filter: str | None = None) -> l
     return search(query_vector, top_k=top_k, type_filter=type_filter)
 
 
-def generate_answer(question: str, chunks: list[RetrievedChunk]) -> str:
+def generate_answer(question: str, chunks: list[RetrievedChunk]) -> tuple[str, int, int]:
+    """Returns (answer_text, input_tokens, output_tokens)."""
     if not settings.ANTHROPIC_API_KEY:
         raise RuntimeError(
             "ANTHROPIC_API_KEY is not set. Add it to your .env to enable answer generation."
         )
 
     if not chunks:
-        return "I couldn't find any relevant information in the World Cup data to answer that."
+        return (
+            "I couldn't find any relevant information in the World Cup data to answer that.",
+            0,
+            0,
+        )
 
     context = _build_context(chunks)
     client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
@@ -58,10 +65,13 @@ def generate_answer(question: str, chunks: list[RetrievedChunk]) -> str:
             }
         ],
     )
-    return "".join(block.text for block in message.content if block.type == "text")
+    answer = "".join(block.text for block in message.content if block.type == "text")
+    return answer, message.usage.input_tokens, message.usage.output_tokens
 
 
 def answer_question(question: str, top_k: int = 5, type_filter: str | None = None) -> RAGAnswer:
     chunks = retrieve(question, top_k=top_k, type_filter=type_filter)
-    answer = generate_answer(question, chunks)
-    return RAGAnswer(answer=answer, sources=chunks)
+    answer, input_tokens, output_tokens = generate_answer(question, chunks)
+    return RAGAnswer(
+        answer=answer, sources=chunks, input_tokens=input_tokens, output_tokens=output_tokens
+    )
