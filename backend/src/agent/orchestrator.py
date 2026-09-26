@@ -21,8 +21,10 @@ from src.agent.tools import TOOL_DEFINITIONS
 from src.agent.web_tools import web_search
 from src.rag.service import retrieve as rag_retrieve
 from src.settings import settings
+from src.usage import guardrails
 
 MAX_TOOL_ITERATIONS = 5
+ENDPOINT_NAME = "agent_ask"
 
 SYSTEM_PROMPT = """You are an assistant for the FIFA World Cup 2026. You have \
 access to tools that query a structured database, search a knowledge base of \
@@ -69,7 +71,9 @@ async def _execute_tool(name: str, tool_input: dict, db: AsyncSession):
         return [{"text": c.text, "score": c.score, "metadata": c.metadata} for c in chunks]
 
     if name == "search_web":
-        return await asyncio.to_thread(web_search, tool_input["query"])
+        result = await asyncio.to_thread(web_search, tool_input["query"])
+        await guardrails.record_tavily_spend(db, ENDPOINT_NAME)
+        return result
 
     return {"error": f"Unknown tool: {name}"}
 
@@ -95,6 +99,9 @@ async def run_agent(question: str, db: AsyncSession) -> AgentAnswer:
         )
 
         messages.append({"role": "assistant", "content": response.content})
+        await guardrails.record_anthropic_spend(
+            db, ENDPOINT_NAME, response.usage.input_tokens, response.usage.output_tokens
+        )
 
         if response.stop_reason != "tool_use":
             final_text = "".join(

@@ -29,6 +29,7 @@ DbContext = Annotated[AsyncSession, Depends(get_db)]
 
 async def setup_db():
     from src.data import sql_models  # noqa: F401 - registers models on Base.metadata
+    from src.usage import models as usage_models  # noqa: F401 - registers usage tables
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
