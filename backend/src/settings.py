@@ -21,5 +21,8 @@ class Settings(BaseSettings):
 
     TAVILY_API_KEY: str = ""
 
+    MAX_REQUESTS_PER_IP: int = 2
+    MAX_API_SPEND_USD: float = 5.00
+
     
 settings = Settings()
